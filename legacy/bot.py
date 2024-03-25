@@ -55,27 +55,6 @@ rag_chain = configure_qa_rag_chain(
 )
 
 # Streamlit UI
-styl = f"""
-<style>
-    /* not great support for :has yet (hello FireFox), but using it for now */
-    .element-container:has([aria-label="Select RAG mode"]) {{
-      position: fixed;
-      bottom: 33px;
-      background: white;
-      z-index: 101;
-    }}
-    .stChatFloatingInputContainer {{
-        bottom: 20px;
-    }}
-
-    /* Generate ticket text area */
-    textarea[aria-label="Description"] {{
-        height: 200px;
-    }}
-</style>
-"""
-st.markdown(styl, unsafe_allow_html=True)
-
 
 def chat_input():
     user_input = st.chat_input("What coding issue can I help you resolve today?")

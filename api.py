@@ -10,8 +10,7 @@ from chains import (
     load_embedding_model,
     load_llm,
     configure_llm_only_chain,
-    configure_qa_rag_chain,
-    generate_ticket,
+    configure_react_chain,
 )
 from fastapi import FastAPI, Depends
 from pydantic import BaseModel
@@ -31,8 +30,6 @@ password = os.getenv("NEO4J_PASSWORD")
 ollama_base_url = os.getenv("OLLAMA_BASE_URL")
 embedding_model_name = os.getenv("EMBEDDING_MODEL")
 llm_name = os.getenv("LLM")
-# Remapping for Langchain Neo4j integration
-os.environ["NEO4J_URL"] = url
 
 embeddings, dimension = load_embedding_model(
     embedding_model_name,
@@ -40,18 +37,14 @@ embeddings, dimension = load_embedding_model(
     logger=BaseLogger(),
 )
 
-# if Neo4j is local, you can go to http://localhost:7474/ to browse the database
-neo4j_graph = Neo4jGraph(url=url, username=username, password=password)
-create_vector_index(neo4j_graph, dimension)
 
 llm = load_llm(
     llm_name, logger=BaseLogger(), config={"ollama_base_url": ollama_base_url}
 )
 
 llm_chain = configure_llm_only_chain(llm)
-rag_chain = configure_qa_rag_chain(
-    llm, embeddings, embeddings_store_url=url, username=username, password=password
-)
+llm_react_chain = configure_react_chain(llm)
+
 
 
 class QueueCallback(BaseCallbackHandler):
@@ -110,7 +103,7 @@ async def root():
 
 class Question(BaseModel):
     text: str
-    rag: bool = False
+    rag: str = 'no-rag'
 
 
 class BaseTicket(BaseModel):
@@ -120,14 +113,14 @@ class BaseTicket(BaseModel):
 @app.get("/query-stream")
 def qstream(question: Question = Depends()):
     output_function = llm_chain
-    if question.rag:
-        output_function = rag_chain
+    if question.rag == "react-chain":
+        output_function = llm_react_chain
 
     q = Queue()
 
     def cb():
         output_function(
-            {"question": question.text, "chat_history": []},
+            {"input": question.text, "question": question.text, "chat_history": []},
             callbacks=[QueueCallback(q)],
         )
 
@@ -142,8 +135,8 @@ def qstream(question: Question = Depends()):
 @app.get("/query")
 async def ask(question: Question = Depends()):
     output_function = llm_chain
-    if question.rag:
-        output_function = rag_chain
+    # if question.rag:
+    #     output_function = rag_chain
     result = output_function(
         {"question": question.text, "chat_history": []}, callbacks=[]
     )
@@ -151,11 +144,3 @@ async def ask(question: Question = Depends()):
     return {"result": result["answer"], "model": llm_name}
 
 
-@app.get("/generate-ticket")
-async def generate_ticket_api(question: BaseTicket = Depends()):
-    new_title, new_question = generate_ticket(
-        neo4j_graph=neo4j_graph,
-        llm_chain=llm_chain,
-        input_question=question.text,
-    )
-    return {"result": {"title": new_title, "text": new_question}, "model": llm_name}

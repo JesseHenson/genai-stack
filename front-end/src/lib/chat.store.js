@@ -61,6 +61,7 @@ function createChatStore() {
             evt.onerror = (e) => {
                 // Stream will end with an error
                 // and we want to close the connection on end (otherwise it will keep reconnecting)
+                console.log(e)
                 evt.close();
                 update((state) => ({ ...state, state: chatStates.IDLE }));
             };

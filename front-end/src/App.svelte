@@ -9,7 +9,7 @@
     import Modal from "./lib/Modal.svelte";
     import { generationStore } from "./lib/generation.store";
 
-    let ragMode = false;
+    let ragMode = "no-rag";
     let question = "How can I calculate age from date of birth in Cypher?";
     let shouldAutoScroll = true;
     let input;
@@ -28,7 +28,9 @@
     }
 
     function scrolling(e) {
-        shouldAutoScroll = e.target.scrollTop + e.target.clientHeight > e.target.scrollHeight - 55;
+        shouldAutoScroll =
+            e.target.scrollTop + e.target.clientHeight >
+            e.target.scrollHeight - 55;
     }
 
     function generateTicket(text) {
@@ -44,8 +46,14 @@
     // send();
 </script>
 
-<main class="h-full text-sm bg-gradient-to-t from-indigo-100 bg-fixed overflow-hidden">
-    <div on:scroll={scrolling} class="flex h-full flex-col py-12 overflow-y-auto" use:scrollToBottom={$chatStore}>
+<main
+    class="h-full text-sm bg-gradient-to-t from-indigo-100 bg-fixed overflow-hidden"
+>
+    <div
+        on:scroll={scrolling}
+        class="flex h-full flex-col py-12 overflow-y-auto"
+        use:scrollToBottom={$chatStore}
+    >
         <div class="w-4/5 mx-auto flex flex-col mb-32">
             {#each $chatStore.data as message (message.id)}
                 <div
@@ -60,40 +68,76 @@
                                 title="Generate a new internal ticket from this question"
                                 on:click={() => generateTicket(message.text)}
                                 class="w-6 h-6 flex flex-col justify-center items-center border rounded border-indigo-200"
-                                ><External --color="#ccc" --hover-color="#999" /></button
+                                ><External
+                                    --color="#ccc"
+                                    --hover-color="#999"
+                                /></button
                             >
                         {/if}
                         <div
                             class:ml-auto={message.from === "me"}
                             class="relative w-12 h-12 border border-indigo-200 rounded flex justify-center items-center overflow-hidden"
                         >
-                            <img src={senderImages[message.from]} alt="" class="rounded-sm" />
+                            <img
+                                src={senderImages[message.from]}
+                                alt=""
+                                class="rounded-sm"
+                            />
                         </div>
                         {#if message.from === "bot"}
                             <div class="text-sm">
-                                <div>Model: {message.model ? message.model : ""}</div>
-                                <div>RAG: {message.rag ? "Enabled" : "Disabled"}</div>
+                                <div>
+                                    Model: {message.model ? message.model : ""}
+                                </div>
+                                <div>
+                                    RAG: {message.rag ? "Enabled" : "Disabled"}
+                                </div>
                             </div>
                         {/if}
                     </div>
-                    <div class="mt-4"><SvelteMarkdown source={message.text} renderers={{ link: MdLink }} /></div>
+                    <div class="mt-4">
+                        <SvelteMarkdown
+                            source={message.text}
+                            renderers={{ link: MdLink }}
+                        />
+                    </div>
                 </div>
             {/each}
         </div>
         <div class="text-sm w-full fixed bottom-16">
-            <div class="shadow-lg bg-indigo-50 rounded-lg w-4/5 xl:w-2/3 2xl:w-1/2 mx-auto">
+            <div
+                class="shadow-lg bg-indigo-50 rounded-lg w-4/5 xl:w-2/3 2xl:w-1/2 mx-auto"
+            >
                 <div class="rounded-t-lg px-4 py-2 font-light">
                     <div class="font-semibold">RAG mode</div>
                     <div class="">
                         <label class="mr-2">
-                            <input type="radio" bind:group={ragMode} value={false} /> Disabled
+                            <input
+                                type="radio"
+                                bind:group={ragMode}
+                                value={"no-rag"}
+                            /> No Rag
                         </label>
                         <label>
-                            <input type="radio" bind:group={ragMode} value={true} /> Enabled
+                            <input
+                                type="radio"
+                                bind:group={ragMode}
+                                value={"react-chain"}
+                            /> React Chain
                         </label>
+                        <!-- <label>
+                            <input
+                                type="radio"
+                                bind:group={ragMode}
+                                value={"neo-rag"}
+                            /> Neo Rag
+                        </label> -->
                     </div>
                 </div>
-                <form class="rounded-md w-full bg-white p-2 m-0" on:submit|preventDefault={send}>
+                <form
+                    class="rounded-md w-full bg-white p-2 m-0"
+                    on:submit|preventDefault={send}
+                >
                     <input
                         placeholder="What coding related question can I help you with?"
                         disabled={$chatStore.state === chatStates.RECEIVING}
@@ -108,7 +152,11 @@
     </div>
 </main>
 {#if generationModalOpen}
-    <Modal title="my title" text="my text" on:close={() => (generationModalOpen = false)} />
+    <Modal
+        title="my title"
+        text="my text"
+        on:close={() => (generationModalOpen = false)}
+    />
 {/if}
 
 <style>

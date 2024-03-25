@@ -17,3 +17,6 @@ boto3
 langchain-openai
 langchain-community
 langchain-google-genai
+langchain_text_splitters
+chromadb
+langchainhub
